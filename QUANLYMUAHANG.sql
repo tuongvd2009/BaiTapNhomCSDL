@@ -132,6 +132,14 @@ go
 
 select dbo.tongSanPhamBan('SP005') as DaBan
 
+-- Hàm kiểm tra thông tin khách hàng qua địa chỉ 
+CREATE FUNCTION fn_CUSTOMER (@DiaChi VARCHAR (25))
+RETURNS TABLE 
+AS 
+RETURN ( SELECT *FROM KHACHHANG WHERE Diachi=@DiaChi );
+go
+
+SELECT * FROM fn_CUSTOMER ('Lien Chieu')
 
 
 
