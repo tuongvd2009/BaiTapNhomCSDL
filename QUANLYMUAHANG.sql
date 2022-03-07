@@ -42,26 +42,26 @@ CREATE TABLE CHITIETDATHANG (
 	  FOREIGN KEY(MaDH) REFERENCES DATHANG (MaDH),
 	  MaSP VARCHAR (10),
 	  FOREIGN KEY(MaSP) REFERENCES SANPHAM (MaSP),
-	  SoluongSPmua VARCHAR (10),
-	  GiaSPmua VARCHAR (10),
-	  Thanhtien VARCHAR (50)
+	  SoluongSPmua INT,
+	  GiaSPmua INT,
+	  Thanhtien INT
 	  )
 GO
 
 --chèn dữ liệu
 INSERT INTO KHACHHANG VALUES
-            ('KH0001', 'Hoàng Kim Trang', 'kimtrang0601@gmail.com', 0921647587, 'Lien Chieu'),
+            ('KH0001', N'Hoàng Kim Trang', 'kimtrang0601@gmail.com', 0921647587, 'Lien Chieu'),
             ('KH0002', N'Hồ Hải Huy', 'haihuy0510@gmail.com', 0935280681, 'Thanh Khe'),
-            ('KH0003', 'Nguyễn Thanh Ba', 'ba198@gmail.com', 0905631375, 'Hai Chau'),
-            ('KH0004', 'Trần Ngọc Hoàng', 'ngochoang89@gmail.com', 0905987789, 'Son Tra'),
-            ('KH0005', 'Hà Văn Bình', 'binhha123@gmail.com', 09565738558, 'Lien Chieu');
+            ('KH0003', N'Nguyễn Thanh Ba', 'ba198@gmail.com', 0905631375, 'Hai Chau'),
+            ('KH0004', N'Trần Ngọc Hoàng', 'ngochoang89@gmail.com', 0905987789, 'Son Tra'),
+            ('KH0005', N'Hà Văn Bình', 'binhha123@gmail.com', 09565738558, 'Lien Chieu');
 GO
 INSERT INTO SANPHAM VALUES
-            ('SP001', 'Áo',  'Dành cho nữ', 100000, 80),
-			('SP002', N'Quần',  'Dành cho nam', 300000, 100 ),
-			('SP003', 'Váy',  'Dành cho nữ', 100000, 50),
-			('SP004', 'Áo dài',   'Dành cho cả nam và nữ', 10000000, 10),
-			('SP005', 'Mũ', 'Dành cho trẻ em', 70000, 80);
+            ('SP001', N'Áo',  N'Dành cho nữ', 100000, 80),
+			('SP002', N'Quần',  N'Dành cho nam', 300000, 100 ),
+			('SP003', N'Váy',  N'Dành cho nữ', 100000, 50),
+			('SP004', N'Áo dài', N'Dành cho cả nam và nữ', 10000000, 10),
+			('SP005', N'Mũ', N'Dành cho trẻ em', 70000, 80);
 GO
 INSERT INTO THANHTOAN VALUES
             ('P001','Credit Card', 11000),
@@ -69,9 +69,9 @@ INSERT INTO THANHTOAN VALUES
 			('P003','Visa', 25000);
 GO
 INSERT INTO DATHANG VALUES
-            ('DH001', 'KH0001', 'P001', '2022-1-25', 'Đã đặt', 100000),
-			('DH002', 'KH0002', 'P002', '2022-2-25', 'Đang giao', 300000),
-			('DH003', 'KH0003', 'P003', '2022-2-28', 'Đang giao', 70000);
+            ('DH001', 'KH0001', 'P001', '2022-1-25', N'Đã đặt', 100000),
+			('DH002', 'KH0002', 'P002', '2022-2-25', N'Đang giao', 300000),
+			('DH003', 'KH0003', 'P003', '2022-2-28', N'Đang giao', 70000);
 GO
 INSERT INTO CHITIETDATHANG VALUES
             ('CT0001', 'DH001', 'SP001', 1, 100000, 100000),
@@ -114,6 +114,23 @@ GO
 
 SELECT*FROM UF_SELECTallKHACHHANG()
 
+
+-- Hàm đếm tổng số lượng đã bán được của một sản phẩm nào đó
+
+create function tongSanPhamBan(@maSP varchar(10))
+returns int
+as
+	begin
+		declare @tongSP int
+
+		select @tongSP = sum(SoluongSPmua) from CHITIETDATHANG
+		where MaSP = @maSP
+
+		return @tongSP
+	end
+go 
+
+select dbo.tongSanPhamBan('SP005') as DaBan
 
 
 
