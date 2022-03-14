@@ -82,18 +82,38 @@ GO
 
 --Tạo view
 
-CREATE VIEW SANPHAM_VIEW AS
-SELECT TenSP, GiaSP 
-FROM SANPHAM;
-SELECT * FROM SANPHAM_VIEW;
+--VIEW hiển thị thông tin khách hàng với ngày đặt hàng là ngày 25-1-2022
+CREATE VIEW NGAYDATHANG1 AS
+SELECT KH.* FROM KHACHHANG KH
+JOIN DATHANG DH
+ON DH.MaKH = KH.MaKH
+WHERE NgayDH = '2022-1-25'
+GO
+SELECT * FROM NGAYDATHANG1
+-- VIEW hiển thị mã sản phẩm, tên sản phẩm có số lượng mua bằng 1
+CREATE VIEW TTSANPHAM AS
+SELECT SP.MaSP, SP.TenSP FROM SANPHAM SP 
+JOIN CHITIETDATHANG CTDH
+ON SP.MaSP = CTDH.MaSP
+WHERE CTDH.SoluongSPmua = 1
+SELECT * FROM TTSANPHAM
 
-CREATE VIEW KHACHHANG_VIEW AS
-SELECT HovaTenKH, SoDT, Diachi
-FROM KHACHHANG;
-SELECT *FROM KHACHHANG_VIEW;
 
 
---Tạo hàm
+
+--VIEW HIỆN THỊ KHÁCH HÀNG COS TỐNG SỐ TIỀN ĐẶT HÀNG LÀ 7OK
+CREATE VIEW SOTIEN AS
+SELECT KH.* FROM KHACHHANG KH
+JOIN DATHANG DH
+ON DH.MaKH = KH.MaKH
+WHERE Tongtien = 70000
+GO
+SELECT * FROM SOTIEN
+
+
+
+
+--TẠO HÀM
 --Viết hàm trả về 1 bảng với các thông tin MaKH,  HovaTenKH,Email,SoDT,DiaChi của khách hàng có trong bảng ORDERS
 CREATE FUNCTION KHACHHANGG()
 returns table as
@@ -145,7 +165,7 @@ SELECT * FROM fn_CUSTOMER ('Lien Chieu')
 
 
 
--- Tạo thủ tục lưu trữ
+-- TẠO THỦ TỤC LƯU TRỮ
 CREATE PROC sp_SP(@MaSP int) AS
 
 BEGIN
@@ -154,8 +174,6 @@ BEGIN
   ELSE
     print N'Không tìm thấy sản phẩm có mã ' + str(@MaSP,3);
 END;
-
-
 
 CREATE PROC sp_TimSP(@TenSP VARCHAR(30)) AS
 BEGIN
@@ -192,3 +210,151 @@ BEGIN
 
     FETCH NEXT FROM cursorSP INTO @MaSP, @TenSP
 END
+
+
+
+
+
+
+
+-- TRIGGER 1
+CREATE TRIGGER TongBangConLai
+ON DATHANG
+FOR DELETE 
+AS 
+BEGIN 
+        DECLARE @tong INT
+		SELECT @tong = COUNT(*) FROM DATHANG
+		PRINT N'Tổng số bản ghi còn lại là: ' + CAST(@tong AS VARCHAR(5))
+END
+GO
+
+delete from DATHANG where MaDH = 'DH004'
+select *from DATHANG
+
+INSERT INTO DATHANG VALUES
+            ('DH004', 'KH0001', 'P001', '2022-1-26', N'Đã đặt', 100000);
+
+
+
+
+
+
+
+-----------------TRIGGER 2 ----------------
+
+
+
+CREATE TRIGGER CapNhatSoLuongSP
+ON SANPHAM
+FOR UPDATE
+AS
+BEGIN
+	IF UPDATE(SoluongSP)
+	BEGIN
+		DECLARE @soluongSP int
+		SELECT @soluongSP = SoluongSP
+		FROM inserted 
+
+		
+		IF(@soluongSP >100)
+		BEGIN
+			PRINT N'Số lượng quá tải @_@ Vui lòng đặt lại số lượng dưới 100'
+			ROLLBACK TRANSACTION
+		END
+		IF(@soluongSP < 0)
+		BEGIN
+			PRINT N'Vui lòng đặt lại số lượng lớn từ 0 đến 100'
+			ROLLBACK TRANSACTION
+		END
+		 
+	END
+END
+GO
+
+UPDATE SANPHAM
+SET SoluongSP = 70
+WHERE MaSP = 'SP002'
+
+select * from SANPHAM
+
+
+
+
+
+-- TRIGGER 3
+
+
+CREATE TRIGGER TinhTongCacSP
+ON SANPHAM
+FOR INSERT 
+AS 
+BEGIN 
+        DECLARE @tong INT
+		SELECT @tong = COUNT(*) FROM SANPHAM
+		PRINT N'Tổng số bản ghi hiện tại là: ' + CAST(@tong AS VARCHAR(5))
+END
+GO
+
+INSERT INTO SANPHAM VALUES
+            ('SP006', N'Nón',  N'Dành cho nữ', 65000, 90);
+GO
+
+select *from SANPHAM
+drop trigger TinhTongCacSP
+
+
+
+
+-- TRIGGER 4
+
+
+
+
+
+CREATE TRIGGER CapNhatGiaSP
+ON SANPHAM
+FOR UPDATE
+AS
+BEGIN
+	IF UPDATE(GiaSP)
+	BEGIN
+		DECLARE @giaSP int
+		SELECT @giaSP = GiaSP
+		FROM inserted 
+		IF(@giaSP <= 0)
+		BEGIN
+			PRINT N'Lỗi! Vui lòng đặt lại bằng số nguyên dương!'
+			ROLLBACK TRANSACTION
+		END
+		 
+	END
+END
+GO
+UPDATE SANPHAM
+SET GiaSP = -1
+WHERE MaSP = 'SP001'
+select * from SANPHAM
+
+
+
+
+
+-- TRIGGER 5
+
+
+CREATE TRIGGER ADDSP
+ON SANPHAM
+FOR INSERT
+AS
+ IF (SELECT TEN.GiaSP FROM SANPHAM SP JOIN inserted TEN
+	                   ON SP.MaSP = TEN.MaSP	   	                  
+		               WHERE SP.MoTa = N'Dành cho nam' ) < 500000
+BEGIN
+     PRINT N'Sản phẩm  > 500000';
+	 ROLLBACK TRANSACTION	 
+END
+INSERT INTO SANPHAM VALUES
+('SP006',  N'Kính', N'Dành cho nam', 600000,  5);
+select * from SANPHAM
+
