@@ -357,4 +357,39 @@ END
 INSERT INTO SANPHAM VALUES
 ('SP006',  N'Kính', N'Dành cho nam', 600000,  5);
 select * from SANPHAM
+-------- 
+/* cập nhật hàng trong kho sau khi đặt hàng hoặc cập nhật */
+CREATE TRIGGER TG_insertCTDH ON dbo.CHITIETDATHANG AFTER INSERT AS 
+BEGIN
+	UPDATE SANPHAM
+	SET SoluongSP = SoluongSP - (
+		SELECT SoluongSPmua
+		FROM inserted
+		WHERE MaSP = SANPHAM.MaSP
+	)
+	FROM dbo.SANPHAM
+	JOIN inserted ON SANPHAM.MaSP = inserted.MaSP
+END
+GO
 
+DROP TRIGGER TG_insertCTDH
+SELECT * FROM SANPHAM
+SELECT * FROM CHITIETDATHANG
+INSERT INTO dbo.CHITIETDATHANG
+VALUES ('CT0004','DH003','SP002',10,100000,200000)
+DELETE dbo.CHITIETDATHANG WHERE MaOrder_detail = 'CT0006'
+
+-----
+
+
+/* cập nhật hàng trong kho sau khi hủy đặt hàng */
+CREATE TRIGGER TG_HuyDatHang ON CHITIETDATHANG FOR DELETE AS 
+BEGIN
+	UPDATE SANPHAM
+	SET SoluongSP = SoluongSP + (SELECT SoluongSPmua FROM deleted WHERE MaSP = SANPHAM.MaSP)
+	FROM SANPHAM
+	JOIN deleted ON SANPHAM.MaSP = deleted.MaSP
+END
+SELECT * FROM SANPHAM
+DELETE dbo.CHITIETDATHANG WHERE MaOrder_detail = 'CT0004'
+DROP TRIGGER TG_HuyDatHang
